@@ -1,0 +1,7 @@
+## Interface: 30300
+## Title: Pippo
+## Notes: Pippo
+## Author: Pippo
+## Version: 1.0
+
+Core.lua
