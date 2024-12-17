@@ -92,7 +92,10 @@ local function OnEvent(_, event, ...)
         deltaCrit = UpdateCurrentState() - castCrit;
         PrintValues()
     elseif(event== "PLAYER_LEAVE_COMBAT")then
+        frame:Hide();
         casted = false;
+        castCrit = 0;
+        deltaCrit = 0;
     elseif(event == "PLAYER_TARGET_CHANGED") then
         currentTarget = UnitName("target")
     elseif(event == "COMBAT_LOG_EVENT_UNFILTERED" and currentTarget and currentTarget == destName) then
