@@ -4,8 +4,9 @@ local casted = false;
 local castCrit = 0;
 local deltaCrit = 0;
 local myName = UnitName("player")
-local frame = CreateFrame("Frame", "CorruptionSnapshotterFrame", UIParent)
 
+
+local frame = CreateFrame("Frame", "CorruptionSnapshotterFrame", UIParent)
 frame:SetSize(64, 64)
 frame:SetPoint("CENTER")
 frame:Hide()
@@ -108,6 +109,8 @@ local function OnEvent(_, event, ...)
         end
     end
 end
+
+
 
 frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 frame:RegisterEvent("PLAYER_TARGET_CHANGED")
