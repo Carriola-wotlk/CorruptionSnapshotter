@@ -1,7 +1,7 @@
 ## Interface: 30300
-## Title: Pippo
-## Notes: Pippo
-## Author: Pippo
+## Title: CorruptionSnapshotter
+## Notes: CorruptionSnapshotter
+## Author: Carriola
 ## Version: 1.0
 
 Core.lua
