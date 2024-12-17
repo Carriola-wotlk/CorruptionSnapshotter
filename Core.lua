@@ -35,15 +35,15 @@ local function UpdateCurrentState()
     local crit = 0
     local critChance = GetSpellCritChance(6);
     local _, _, _, _, _, _, mod = UnitDamage("player")
-    print("mod");
-    print(mod)
+    --print("mod");
+    --print(mod)
 
-    print("critChange");
-    print(critChance)
+    --print("critChange");
+    --print(critChance)
 
     local healthPercentage = (UnitHealth('target') / UnitHealthMax('target')) * 100
-    print("health");
-    print(healthPercentage)
+    --print("health");
+    --print(healthPercentage)
    
     for i = 1, 40 do
         local debuffName, rank, _, stack, _, _, _, _, _, spellId = UnitDebuff("target", i)
@@ -70,8 +70,8 @@ local function UpdateCurrentState()
         mod = mod + 0.12;
     end
 
-    print("formula")
-    print((((100*(mod))*(100-crit)/100)+((100*(mod)*2)*(crit)/100)))
+    --print("formula")
+    --print((((100*(mod))*(100-crit)/100)+((100*(mod)*2)*(crit)/100)))
 
     return (((100*(mod))*(100-crit)/100)+((100*(mod)*2)*(crit)/100))
 end
@@ -81,25 +81,31 @@ local function PrintValues()
     frame:Show()
 end
 
+local function ResetValues()
+    frame:Hide();
+    casted = false;
+    castCrit = 0;
+    deltaCrit = 0;
+end
 local function OnCorruptionRemoved()
     frame:Hide()
 end
 
 local function OnEvent(_, event, ...)
-    local timestamp, subEvent, a, sourceName, _, _, destName, _, spellId, spellName = ...
-
+    local arg0, subEvent, a, sourceName, _, _, destName, _, spellId, spellName = ...
     if(event == "UNIT_HEALTH") then
         deltaCrit = UpdateCurrentState() - castCrit;
         PrintValues()
-    elseif(event== "PLAYER_LEAVE_COMBAT")then
-        frame:Hide();
-        casted = false;
-        castCrit = 0;
-        deltaCrit = 0;
+    elseif(event == "PLAYER_LEAVE_COMBAT") then
+        ResetValues();
+    elseif(event == "UNIT_THREAT_SITUATION_UPDATE") then
+        if(arg0 ~= "player" or UnitAffectingCombat('player')) then
+            return;
+        end
+        ResetValues();
     elseif(event == "PLAYER_TARGET_CHANGED") then
         currentTarget = UnitName("target")
     elseif(event == "COMBAT_LOG_EVENT_UNFILTERED" and currentTarget and currentTarget == destName) then
-
         if sourceName == myName and spellName == "Corruption" then
             castCrit = UpdateCurrentState() or 0;
             casted = true;
@@ -112,10 +118,9 @@ local function OnEvent(_, event, ...)
     end
 end
 
-
-
+frame:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE")
+frame:RegisterEvent("PLAYER_LEAVE_COMBAT")
 frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 frame:RegisterEvent("PLAYER_TARGET_CHANGED")
-frame:RegisterEvent("PLAYER_LEAVE_COMBAT")
 frame:RegisterEvent("UNIT_HEALTH")
 frame:SetScript("OnEvent", OnEvent)
