@@ -1,4 +1,3 @@
-local corruptionSpellId = 47813
 local currentTarget = nil;
 local casted = false;
 local castCrit = 0;
@@ -87,9 +86,8 @@ local function OnCorruptionRemoved()
 end
 
 local function OnEvent(_, event, ...)
-    local timestamp, subEvent, a, sourceName, _, _, destName, _, spellId = ...
+    local timestamp, subEvent, a, sourceName, _, _, destName, _, spellId, spellName = ...
 
-   
     if(event == "UNIT_HEALTH") then
         deltaCrit = UpdateCurrentState() - castCrit;
         PrintValues()
@@ -98,7 +96,8 @@ local function OnEvent(_, event, ...)
     elseif(event == "PLAYER_TARGET_CHANGED") then
         currentTarget = UnitName("target")
     elseif(event == "COMBAT_LOG_EVENT_UNFILTERED" and currentTarget and currentTarget == destName) then
-        if sourceName == myName and spellId == corruptionSpellId then
+
+        if sourceName == myName and spellName == "Corruption" then
             castCrit = UpdateCurrentState() or 0;
             casted = true;
             PrintValues()
