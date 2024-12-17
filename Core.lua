@@ -13,10 +13,9 @@ local debuffTable = {
     }
 }
 
-local currentState = {
-    crit = 0,
-    damage = 0,
-}
+local castCrit = 0;
+local deltaCrit = 0;
+
 
 local frame = CreateFrame("Frame", "CorruptionSnapshotterFrame", UIParent)
 frame:SetSize(64, 64)
@@ -30,11 +29,12 @@ icon:SetTexture("Interface\\Icons\\Spell_Shadow_AbominationExplosion")
 local text = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 text:SetPoint("BOTTOM", frame, "TOP", 0, 5)
 
-
-
 local function UpdateCurrentState()
-    currentState.crit = 0
-    currentState.damage = 0
+    local crit = 0
+    local critChance = GetSpellCritChance(6);
+    local _, _, _, _, _, _, mod = UnitDamage("player")
+
+    local healthPercentage = (UnitHealth('target') / UnitHealthMax('target')) * 100
 
     for i = 1, 40 do
         local debuffName, rank, _, stack, _, _, _, _, _, spellId = UnitDebuff("target", i)
@@ -51,33 +51,22 @@ local function UpdateCurrentState()
         end
 
         if debuff then
-            if debuff.stat == "damage" then
-                currentState.damage = currentState.damage + debuff.bonus
-            elseif debuff.stat == "crit" then
-                currentState.crit = currentState.crit + debuff.bonus
+            if debuff.stat == "crit" then
+                crit = crit + debuff.bonus
             end
         end
     end
+    crit = crit + critChance;
+
+    if healthPercentage <= 35 then
+        mod = mod + 0.12;
+    end
+
+    return (((100*(mod))*(100-crit)/100)+((100*(mod)*2)*(crit)/100))
 end
 
-local function GetSnapshotStats()
-    -- Ottieni i valori di base
-    local spellPower = GetSpellBonusDamage(6)
-    local critChance = GetSpellCritChance(6)
-
-    local finalCritChance = critChance + currentState.crit
-    local finalSpellPower = spellPower + currentState.damage
-
-    return finalSpellPower, finalCritChance
-end
-
-
-local function StartCalculation()
-    UpdateCurrentState()
-
-    local spellPower, critChance = GetSnapshotStats()
-
-    text:SetText(string.format("SP: %d | Crit: %.2f%%", spellPower, critChance))
+local function PrintValues()
+    text:SetText(string.format("castCrit: %d | deltaCrit: %d", castCrit, deltaCrit))
     frame:Show()
 end
 
@@ -85,22 +74,31 @@ local function OnCorruptionRemoved()
     frame:Hide()
 end
 
-frame:SetScript("OnEvent", function(_, event, ...)
+function OnEvent(_, event, ...)
     local timestamp, subEvent, a, sourceName, _, _, destName, _, spellId = ...
     
-    if(event == "PLAYER_TARGET_CHANGED") then
+    if(event == "UNIT_HEALTH") then
+        deltaCrit = UpdateCurrentState() - castCrit;
+        PrintValues()
+    elseif(event == "PLAYER_TARGET_CHANGED") then
         currentTarget = UnitName("target")
-        StartCalculation()
+        StartCalculation(false)
     elseif(event == "COMBAT_LOG_EVENT_UNFILTERED" and currentTarget == destName) then
         local myName = UnitName("player")
 
-        if sourceName ~= myName then return end
-
-        if (subEvent == "SPELL_AURA_APPLIED" or subEvent == "SPELL_AURA_REFRESH" or subEvent == "SPELL_AURA_REMOVED") then
-            StartCalculation()
+        if sourceName ~= myName and spellId == 47813 then
+            castCrit = UpdateCurrentState();
+            PrintValues()
+        elseif (subEvent == "SPELL_AURA_APPLIED" or subEvent == "SPELL_AURA_REFRESH" or subEvent == "SPELL_AURA_REMOVED") then
+            deltaCrit = UpdateCurrentState() - castCrit
+            PrintValues()
         end
     end
-end)
+end
+
+
 
 frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 frame:RegisterEvent("PLAYER_TARGET_CHANGED")
+frame:RegisterEvent("UNIT_HEALTH")
+frame:SetScript("OnEvent", OnEvent)
